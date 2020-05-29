@@ -1,73 +1,83 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
+using System.Security.Cryptography.Xml;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using TrashCollectorProj.Data;
 using TrashCollectorProj.Models;
 
 namespace TrashCollectorProj.Controllers
-{
+{[Authorize(Roles ="cstomer")]
     public class CustomersController : Controller
 
     {
         private readonly ApplicationDbContext _context;
 
-        public  CustomersController(ApplicationDbContext context)
+        public CustomersController(ApplicationDbContext context)
         {
             _context = context;
         }
         // GET: Customers
         public ActionResult Index()
         {
-            var customerLoggedIn =     
-            //var applicationDbContext = _context.Customers.Include(c => c.IdentityUser);
-            //return View(applicationDbContext.ToList());
+            var userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var customerLoggedIn = _context.Customers.Where(c => c.IDentityUSerId == userId).SingleOrDefault();
+            if (customerLoggedIn == null)
+            {
+                return RedirectToAction("Create");
+            }
+
+            return View(customerLoggedIn);
+
+
         }
 
-            // GET: Customers/Details/5
-            public ActionResult Details(int? id)
-            {
-            if (id == null)
+        // GET: Customers/Details/5
+        public ActionResult Details(int? IDentityUSerId)
+        {
+            if (IDentityUSerId == null)
             {
                 return NotFound();
             }
-            var customer =  _context.Customers
-               .Include(c => c.IdentityUser)
-               .FirstOrDefaultAsync(m => m.CustomerId == id);
-            if (customer == null)
 
-                return View();
+            var customer = _context.Customers
+               .Include(c => c.IdentityUser)
+               .FirstOrDefaultAsync(m => m.CustomerId == IDentityUSerId);
+            if (customer == null)
+            {
+                return NotFound();
+
             }
+            return View();
+        }
+
 
         // GET: Customers/Create
         public ActionResult Create()
         {
-            ViewData["IdentityUserId"] = new SelectList(_context.Users, "Id", "Id");
+            ViewData["IDentityUSerId"] = new SelectList(_context.Users, "Id", "Id");
             return View();
-          
+
         }
 
         // POST: Customers/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public ActionResult Create(Customer customer)
         {
             try
             {
-                Customer customer = new Customer();
-                customer.CustomerId = Convert.ToInt32(collection["CustomerId"]);
-                customer.Name = collection["Name"];
-                customer.Address = Convert.ToInt32(collection["Adress"]);
-                customer.City = collection["City"];
-                customer.State = collection["State"];
-                customer.Zip = Convert.ToInt32(collection["Zip"]);
-                customer.pickupDay = collection["pickupDay"];
-                customer.startTerminationDay = collection["startTerminationDay"];
-                customer.endTerminationDay = collection["endTerminationDay"];
+                var userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                customer.IDentityUSerId = userId;
 
                 _context.Add(customer);
                 _context.SaveChanges();
@@ -76,65 +86,31 @@ namespace TrashCollectorProj.Controllers
             }
             catch
             {
-                ViewData["IdentityUserId"] = new SelectList(_context.Users, "Id", "Id", customer.IdentityUserId);
-                return View(customer);
+                ViewData["IDentityUSerId"] = new SelectList(_context.Users, "Id", "Id", _context.ContextId);
+                return View();
             }
         }
 
         // GET: Customers/Edit/5
         public ActionResult Edit(int? id)
         {
-            
-            return View();
+
+            var customer = _context.Customers.Where(c => c.CustomerId == id).FirstOrDefault();
+            return View(customer);
         }
+
+
+
 
         // POST: Customers/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public ActionResult Edit(int id)
         {
-            if (id != Customer==CustomerId)
-            {
-                return NotFound();
-            }
-            try
-            {
-                _context.Update(customer);
-                _context.SaveChanges();
-                return RedirectToAction(nameof(Index));
-            }
-            catch 
-            
-                return View(customer);
-            }
-
+            return View();
         }
 
-        // GET: Customers/Delete/5
-        public ActionResult Delete(int id)
-        {
-            var customer = _context.Customers
-                .Include(c => c.IdentityUser)
-                .FirstOrDefault(c => c.CustomerId == id);
-            return View(customer);
-        }
 
-        // POST: Customers/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]  public ActionResult Delete(int id, IFormCollection collection)
-        {
-            try
-            {
-                var customer = _context.Customers.Find(id);
-                  _context.Customers.Remove(customer);
-                _context.SaveChanges();
-
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
     }
+
 }

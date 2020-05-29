@@ -14,10 +14,9 @@ namespace TrashCollectorProj.Controllers
         // GET: Employees
         public ActionResult Index()
         {
-            Employee employee = new Employee();
-            List<Employee> employees = employees.Employees.ToList();
-            
-            return View(employees);
+
+
+            return View();
         }
 
         // GET: Employees/Details/5

@@ -5,10 +5,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using TrashCollectorProj.ActionFilters;
 using TrashCollectorProj.Models;
 
 namespace TrashCollectorProj.Controllers
-{
+{[ServiceFilter(typeof(GlobalRouting))]
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
